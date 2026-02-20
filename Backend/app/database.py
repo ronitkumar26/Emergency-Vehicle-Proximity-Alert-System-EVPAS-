@@ -12,7 +12,7 @@ if not DATABASE_URL:
 
 engine = create_engine(
     DATABASE_URL,
-    echo=True  # logs SQL queries (dev only)
+    echo=False
 )
 
 SessionLocal = sessionmaker(
