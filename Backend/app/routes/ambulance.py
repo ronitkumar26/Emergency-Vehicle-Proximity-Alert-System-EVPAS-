@@ -4,6 +4,8 @@ from datetime import datetime
 from app.schemas.ambulance import AmbulanceUpdate, AmbulanceResponse
 from app.database import get_db
 from app.models.ambulance import Ambulance
+from app.models.vehicles import Vehicle
+from app.utils.distance import haversine_distance
 
 router = APIRouter(prefix="/ambulance", tags=["Ambulance"])
 
@@ -51,3 +53,34 @@ def get_ambulance(vehicle_number: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Ambulance not found")
 
     return ambulance
+
+
+@router.post("/{vehicle_number}/check-alert")
+def check_alert(vehicle_number: str, db: Session = Depends(get_db)):
+    ambulance = db.query(Ambulance).filter(Ambulance.vehicle_number == vehicle_number).first()
+
+    if not ambulance:
+        raise HTTPException(status_code=404, detail="Ambulance not found")
+
+    vehicles = db.query(Vehicle).filter(Vehicle.is_active == True).all()
+
+    vehicles_in_range = []
+
+    for vehicle in vehicles:
+        distance = haversine_distance(
+            ambulance.latitude,
+            ambulance.longitude,
+            vehicle.latitude,
+            vehicle.longitude
+        )
+
+        if distance <= 2:  # 2 km radius
+            vehicles_in_range.append({
+                "vehicle_number": vehicle.vehicle_number,
+                "distance_km": round(distance, 2)
+            })
+
+    return {
+        "ambulance": ambulance.vehicle_number,
+        "vehicles_in_range": vehicles_in_range
+    }
