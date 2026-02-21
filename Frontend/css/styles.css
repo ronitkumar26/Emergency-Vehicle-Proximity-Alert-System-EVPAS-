@@ -8,3 +8,8 @@ body {
     height: 100vh;
     width: 100%;
 }
+
+.emoji-icon {
+    font-size: 32px;
+    text-align: center;
+}

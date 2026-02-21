@@ -7,22 +7,28 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 let ambulanceMarker = null;
 let vehicleMarkers = {};
 
-// 🚑 Icons
-const ambulanceIcon = L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/2967/2967350.png",
-    iconSize: [40, 40]
+// 🚑 Emoji Icons using DivIcon
+
+const ambulanceIcon = L.divIcon({
+    html: "🚑",
+    className: "emoji-icon",
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
 });
 
-const normalVehicleIcon = L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/744/744465.png",
-    iconSize: [35, 35]
+const normalVehicleIcon = L.divIcon({
+    html: "🚗",
+    className: "emoji-icon",
+    iconSize: [35, 35],
+    iconAnchor: [17, 17]
 });
 
-const alertVehicleIcon = L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/564/564619.png",
-    iconSize: [35, 35]
+const alertVehicleIcon = L.divIcon({
+    html: "🚨",
+    className: "emoji-icon",
+    iconSize: [35, 35],
+    iconAnchor: [17, 17]
 });
-
 async function fetchAmbulances() {
     const response = await fetch("http://127.0.0.1:8000/ambulance/");
     return await response.json();
@@ -51,6 +57,7 @@ async function updateMap() {
          .bindPopup("Ambulance: " + amb.vehicle_number);
     } else {
         ambulanceMarker.setLatLng([amb.latitude, amb.longitude]);
+        // map.setView([amb.latitude, amb.longitude], 14);
     }
 
     // Trigger alert engine
@@ -89,7 +96,6 @@ async function updateMap() {
         if (isAlerted) {
             marker.setIcon(alertVehicleIcon);
             marker.bindPopup("🚨 EMERGENCY VEHICLE APPROACHING!").openPopup();
-            map.setView([vehicle.latitude, vehicle.longitude], 16);
         } else {
             marker.setIcon(normalVehicleIcon);
             marker.bindPopup("Vehicle: " + vehicle.vehicle_number);
