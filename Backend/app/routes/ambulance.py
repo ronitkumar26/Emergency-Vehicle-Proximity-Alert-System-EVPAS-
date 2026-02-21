@@ -11,7 +11,7 @@ router = APIRouter(prefix="/ambulance", tags=["Ambulance"])
 
 
 # Update or Create Ambulance Location
-@router.post("/update-location", response_model=AmbulanceResponse)
+@router.post("/update-location")
 def update_ambulance_location(data: AmbulanceUpdate, db: Session = Depends(get_db)):
     ambulance = db.query(Ambulance).filter(Ambulance.vehicle_number == data.vehicle_number).first()
     if not ambulance:
@@ -34,7 +34,28 @@ def update_ambulance_location(data: AmbulanceUpdate, db: Session = Depends(get_d
     db.commit()
     db.refresh(ambulance)
 
-    return ambulance
+    vehicles = db.query(Vehicle).filter(Vehicle.is_active == True).all()
+
+    vehicles_in_range = []
+
+    for vehicle in vehicles:
+        distance = haversine_distance(
+            ambulance.latitude,
+            ambulance.longitude,
+            vehicle.latitude,
+            vehicle.longitude
+        )
+
+        if distance <= 2:
+            vehicles_in_range.append({
+                "vehicle_number": vehicle.vehicle_number,
+                "distance_km": round(distance, 2)
+            })
+
+    return {
+        "ambulance": ambulance.vehicle_number,
+        "vehicles_alerted": vehicles_in_range
+    }
 
 
 #  Get All Active Ambulances
@@ -54,33 +75,34 @@ def get_ambulance(vehicle_number: str, db: Session = Depends(get_db)):
 
     return ambulance
 
+# This is a manual check endpoint to see which vehicles are in range of a specific ambulance.
 
-@router.post("/{vehicle_number}/check-alert")
-def check_alert(vehicle_number: str, db: Session = Depends(get_db)):
-    ambulance = db.query(Ambulance).filter(Ambulance.vehicle_number == vehicle_number).first()
+# @router.post("/{vehicle_number}/check-alert")
+# def check_alert(vehicle_number: str, db: Session = Depends(get_db)):
+#     ambulance = db.query(Ambulance).filter(Ambulance.vehicle_number == vehicle_number).first()
 
-    if not ambulance:
-        raise HTTPException(status_code=404, detail="Ambulance not found")
+#     if not ambulance:
+#         raise HTTPException(status_code=404, detail="Ambulance not found")
 
-    vehicles = db.query(Vehicle).filter(Vehicle.is_active == True).all()
+#     vehicles = db.query(Vehicle).filter(Vehicle.is_active == True).all()
 
-    vehicles_in_range = []
+#     vehicles_in_range = []
 
-    for vehicle in vehicles:
-        distance = haversine_distance(
-            ambulance.latitude,
-            ambulance.longitude,
-            vehicle.latitude,
-            vehicle.longitude
-        )
+#     for vehicle in vehicles:
+#         distance = haversine_distance(
+#             ambulance.latitude,
+#             ambulance.longitude,
+#             vehicle.latitude,
+#             vehicle.longitude
+#         )
 
-        if distance <= 2:  # 2 km radius
-            vehicles_in_range.append({
-                "vehicle_number": vehicle.vehicle_number,
-                "distance_km": round(distance, 2)
-            })
+#         if distance <= 2:  # 2 km radius
+#             vehicles_in_range.append({
+#                 "vehicle_number": vehicle.vehicle_number,
+#                 "distance_km": round(distance, 2)
+#             })
 
-    return {
-        "ambulance": ambulance.vehicle_number,
-        "vehicles_in_range": vehicles_in_range
-    }
+#     return {
+#         "ambulance": ambulance.vehicle_number,
+#         "vehicles_in_range": vehicles_in_range
+#     }
