@@ -1,5 +1,22 @@
+const sirenSound = document.getElementById("sirenSound");
+let sirenPlaying = false;
 const alertBanner = document.getElementById("alertBanner");
 const map = L.map('map').setView([28.6145, 77.2095], 14);
+
+let audioUnlocked = false;
+
+document.addEventListener("click", () => {
+    if (!audioUnlocked) {
+        sirenSound.play().then(() => {
+            sirenSound.pause();
+            sirenSound.currentTime = 0;
+            audioUnlocked = true;
+            console.log("Audio unlocked");
+        }).catch(err => {
+            console.log("Audio still blocked:", err);
+        });
+    }
+});
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
@@ -107,8 +124,21 @@ async function updateMap() {
     });
     if (alertActive) {
         alertBanner.classList.remove("hidden");
+    
+        if (!sirenPlaying) {
+            sirenSound.loop = true;
+            sirenSound.play().catch(err => console.log("Play error:", err));
+            sirenPlaying = true;
+        }
+    
     } else {
         alertBanner.classList.add("hidden");
+    
+        if (sirenPlaying) {
+            sirenSound.pause();
+            sirenSound.currentTime = 0;
+            sirenPlaying = false;
+        }
     }
 }
 
