@@ -1,3 +1,4 @@
+const alertBanner = document.getElementById("alertBanner");
 const map = L.map('map').setView([28.6145, 77.2095], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -77,6 +78,8 @@ async function updateMap() {
     const alertData = await alertResponse.json();
     const alertedVehicles = alertData.vehicles_alerted.map(v => v.vehicle_number);
 
+    let alertActive = false;
+
     vehicles.forEach(vehicle => {
 
         let marker = vehicleMarkers[vehicle.vehicle_number];
@@ -94,6 +97,7 @@ async function updateMap() {
         }
 
         if (isAlerted) {
+            alertActive = true;
             marker.setIcon(alertVehicleIcon);
             marker.bindPopup("🚨 EMERGENCY VEHICLE APPROACHING!").openPopup();
         } else {
@@ -101,6 +105,11 @@ async function updateMap() {
             marker.bindPopup("Vehicle: " + vehicle.vehicle_number);
         }
     });
+    if (alertActive) {
+        alertBanner.classList.remove("hidden");
+    } else {
+        alertBanner.classList.add("hidden");
+    }
 }
 
 // Auto refresh
