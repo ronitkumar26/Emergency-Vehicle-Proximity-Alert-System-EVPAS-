@@ -93,14 +93,20 @@ async function updateMap() {
     });
 
     const alertData = await alertResponse.json();
-    const alertedVehicles = alertData.vehicles_alerted.map(v => v.vehicle_number);
+    const alertedVehicles = alertData.vehicles_alerted;
 
     let alertActive = false;
+    let nearestDistance = null;
 
     vehicles.forEach(vehicle => {
-
+        
         let marker = vehicleMarkers[vehicle.vehicle_number];
-        const isAlerted = alertedVehicles.includes(vehicle.vehicle_number);
+
+        const alertVehicle = alertedVehicles.find(
+            v => v.vehicle_number === vehicle.vehicle_number
+        );
+
+        const isAlerted = !!alertVehicle;
 
         if (!marker) {
             marker = L.marker(
@@ -114,30 +120,47 @@ async function updateMap() {
         }
 
         if (isAlerted) {
+
             alertActive = true;
+
             marker.setIcon(alertVehicleIcon);
-            marker.bindPopup("🚨 EMERGENCY VEHICLE APPROACHING!").openPopup();
+
+            marker.bindPopup(
+                "🚨 EMERGENCY APPROACHING<br>Distance: " +
+                alertVehicle.distance_km + " km"
+            ).openPopup();
+
+            nearestDistance = alertVehicle.distance_km;
+
         } else {
             marker.setIcon(normalVehicleIcon);
             marker.bindPopup("Vehicle: " + vehicle.vehicle_number);
         }
+
     });
     if (alertActive) {
+
         alertBanner.classList.remove("hidden");
+        alertBanner.innerHTML = `
+            🚑 Emergency Vehicle Approaching <br>
+            Distance: ${nearestDistance} km
+        `;
     
-        if (!sirenPlaying) {
-            sirenSound.loop = true;
-            sirenSound.play().catch(err => console.log("Play error:", err));
-            sirenPlaying = true;
+        if (sirenSound.paused) {
+            sirenSound.play().catch(err => console.log(err));
         }
     
     } else {
-        alertBanner.classList.add("hidden");
     
-        if (sirenPlaying) {
+        alertBanner.innerHTML = "✅ Emergency Cleared";
+        
+        setTimeout(() => {
+            alertBanner.classList.add("hidden");
+        }, 2000);
+    
+        if (!sirenSound.paused) {
             sirenSound.pause();
             sirenSound.currentTime = 0;
-            sirenPlaying = false;
         }
     }
 }

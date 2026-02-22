@@ -46,7 +46,7 @@ def update_ambulance_location(data: AmbulanceUpdate, db: Session = Depends(get_d
             vehicle.longitude
         )
 
-        if distance <= 0.3:  # 300 meters radius
+        if distance <= 0.7:  # 300 meters radius
             vehicles_in_range.append({
                 "vehicle_number": vehicle.vehicle_number,
                 "distance_km": round(distance, 2)

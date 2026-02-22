@@ -3,8 +3,11 @@ from datetime import datetime
 from app.database import SessionLocal
 from app.models.ambulance import Ambulance
 
-current_lng = 77.2000   # starting longitude
-direction = 1           # 1 = move right, -1 = move left
+current_lng = 77.1900   # Start far left
+direction = 1
+
+LEFT_BOUND = 77.1900
+RIGHT_BOUND = 77.2400   # Go much further right before U-turn
 
 async def simulate_ambulance_movement():
     global current_lng, direction
@@ -14,16 +17,15 @@ async def simulate_ambulance_movement():
         ambulance = db.query(Ambulance).first()
 
         if ambulance:
-            # Fixed latitude (straight horizontal road)
-            ambulance.latitude = 28.6145
+            ambulance.latitude = 28.6145  # fixed road
 
-            # Move longitude left & right
-            current_lng += 0.001 * direction
+            # Move ambulance
+            current_lng += 0.002 * direction
 
-            # Reverse direction when reaching boundary
-            if current_lng > 77.2200:
+            # U-turn only after fully crossing area
+            if current_lng >= RIGHT_BOUND:
                 direction = -1
-            elif current_lng < 77.2000:
+            elif current_lng <= LEFT_BOUND:
                 direction = 1
 
             ambulance.longitude = current_lng
@@ -33,4 +35,4 @@ async def simulate_ambulance_movement():
             print("🚑 Ambulance moved")
 
         db.close()
-        await asyncio.sleep(3)
+        await asyncio.sleep(3)  
