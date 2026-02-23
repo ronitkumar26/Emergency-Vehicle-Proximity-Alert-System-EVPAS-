@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ambulance Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        button {
+            padding: 15px 25px;
+            font-size: 18px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            background: red;
+            color: white;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🚑 Ambulance Simulator</h1>
+
+<button onclick="startAmbulance()">Start Ambulance</button>
+<button onclick="stopAmbulance()">Stop</button>
+
+<p id="status">Ambulance stopped.</p>
+
+<script>
+
+const BACKEND = "http://192.168.1.3:8000";  // 🔥 Replace this
+
+let lat = 28.6145;
+let lng = 77.2000;   // start far away
+let interval = null;
+
+function startAmbulance() {
+
+    if (interval) return;
+
+    document.getElementById("status").innerText = "Ambulance Moving...";
+
+    interval = setInterval(() => {
+
+        // Move straight toward vehicle
+        lng += 0.001;
+
+        fetch(`${BACKEND}/ambulance/update-location`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                vehicle_number: "AMB001",
+                latitude: lat,
+                longitude: lng,
+                speed: 60
+            })
+        });
+
+        // After passing vehicle, reset far back
+        if (lng > 77.2300) {
+            lng = 77.2000;
+        }
+
+    }, 2000);
+}
+
+function stopAmbulance() {
+    clearInterval(interval);
+    interval = null;
+    document.getElementById("status").innerText = "Ambulance stopped.";
+}
+
+</script>
+
+</body>
+</html>

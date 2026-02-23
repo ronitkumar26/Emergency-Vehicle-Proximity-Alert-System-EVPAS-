@@ -1,37 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Emergency Vehicle Alert System</title>
-    <meta charset="utf-8" />
+    <title>EVPAS Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Leaflet CSS -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet/dist/leaflet.css"
-    />
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            margin-top: 100px;
+        }
+        a {
+            display: block;
+            margin: 20px;
+            padding: 15px;
+            background: black;
+            color: white;
+            text-decoration: none;
+            font-size: 20px;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
 
-<div id="alertBanner" class="hidden">
-    🚨 EMERGENCY VEHICLE APPROACHING – GIVE WAY 🚑
-</div>
+    <h1>🚨 EVPAS Demo</h1>
 
-
-<div id="map"></div>
-
-
-
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<audio id="sirenSound" src="siren.mp3" loop></audio>
-
-<!-- Custom JS -->
-<script src="js/map.js"></script>
+    <a href="ambulance.html">🚑 Start Ambulance Mode</a>
+    <a href="vehicle.html">🚗 Start Vehicle Mode</a>
 
 </body>
 </html>

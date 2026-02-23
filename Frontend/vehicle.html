@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicle Mode</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 80vh; }
+        #alertBanner {
+            display: none;
+            background: red;
+            color: white;
+            padding: 15px;
+            font-size: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="alertBanner">🚨 EMERGENCY VEHICLE APPROACHING 🚨</div>
+<div id="map"></div>
+
+<audio id="sirenSound" src="siren.mp3"></audio>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+const BACKEND = "http://192.168.1.3:8000";
+
+const map = L.map('map').setView([28.6145, 77.2095], 14);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+const sirenSound = document.getElementById("sirenSound");
+const alertBanner = document.getElementById("alertBanner");
+
+let ambulanceMarker = null;
+let vehicleMarker = null;
+let sirenPlaying = false;
+
+const ambulanceIcon = L.divIcon({
+    html: "🚑",
+    className: "",
+    iconSize: [40, 40]
+});
+
+const normalIcon = L.divIcon({
+    html: "🚗",
+    className: "",
+    iconSize: [35, 35]
+});
+
+const alertIcon = L.divIcon({
+    html: "🚨",
+    className: "",
+    iconSize: [35, 35]
+});
+
+// Register vehicle once
+async function registerVehicle() {
+    await fetch(`${BACKEND}/vehicle/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            vehicle_number: "CAR001",
+            latitude: 28.6145,
+            longitude: 77.2095
+        })
+    });
+}
+registerVehicle();
+
+async function updateMap() {
+
+    const ambRes = await fetch(`${BACKEND}/ambulance/`);
+    const ambulance = (await ambRes.json())[0];
+
+    if (!ambulance) return;
+
+    if (!ambulanceMarker) {
+        ambulanceMarker = L.marker(
+            [ambulance.latitude, ambulance.longitude],
+            { icon: ambulanceIcon }
+        ).addTo(map);
+    } else {
+        ambulanceMarker.setLatLng(
+            [ambulance.latitude, ambulance.longitude]
+        );
+    }
+
+    const alertRes = await fetch(`${BACKEND}/ambulance/update-location`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            vehicle_number: ambulance.vehicle_number,
+            latitude: ambulance.latitude,
+            longitude: ambulance.longitude,
+            speed: ambulance.speed
+        })
+    });
+
+    const alertData = await alertRes.json();
+    const inAlert = alertData.vehicles_alerted.length > 0;
+
+    if (!vehicleMarker) {
+        vehicleMarker = L.marker(
+            [28.6145, 77.2095],
+            { icon: normalIcon }
+        ).addTo(map);
+    }
+
+    if (inAlert) {
+        vehicleMarker.setIcon(alertIcon);
+        alertBanner.style.display = "block";
+
+        if (!sirenPlaying) {
+            sirenSound.loop = true;
+            sirenSound.play().catch(() => {});
+            sirenPlaying = true;
+        }
+    } else {
+        vehicleMarker.setIcon(normalIcon);
+        alertBanner.style.display = "none";
+
+        if (sirenPlaying) {
+            sirenSound.pause();
+            sirenSound.currentTime = 0;
+            sirenPlaying = false;
+        }
+    }
+}
+
+setInterval(updateMap, 3000);
+updateMap();
+
+</script>
+</body>
+</html>
